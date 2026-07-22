@@ -2,6 +2,7 @@
 
 class cfs_loop extends cfs_field
 {
+    public $values;
 
     function __construct() {
         $this->name = 'loop';
@@ -124,13 +125,13 @@ class cfs_loop extends cfs_field
             </div>
             <div class="cfs_loop_body open">
             <?php foreach ( $results as $field ) : ?>
-                <label><?php echo $field->label; ?></label>
+                <label><?php echo esc_html( $field->label ); ?></label>
 
                 <?php if ( ! empty( $field->notes ) ) : ?>
-                <p class="notes"><?php echo $field->notes; ?></p>
+                <p class="notes"><?php echo esc_html( $field->notes ); ?></p>
                 <?php endif; ?>
 
-                <div class="field field-<?php echo $field->name; ?> cfs_<?php echo $field->type; ?>">
+                <div class="field field-<?php echo esc_attr( $field->name ); ?> cfs_<?php echo esc_attr( $field->type ); ?>">
                 <?php
                 if ( 'loop' == $field->type ) :
                     $loop_field_ids[] = $field->id;
@@ -170,6 +171,28 @@ class cfs_loop extends cfs_field
 
     /*
     ================================================================
+        get_values_by_tag
+    ================================================================
+    */
+    function get_values_by_tag( $tag ) {
+        if (!preg_match_all('/\[([^\]]+)\]/', $tag, $matches)) {
+            return FALSE;
+        }
+        $keys = $matches[1];
+
+        $current = $this->values;
+        foreach ($keys as $key) {
+            if (!is_array($current) || !array_key_exists($key, $current)) {
+                return FALSE;
+            }
+            $current = $current[$key];
+        }
+
+        return $current;
+    }
+
+    /*
+    ================================================================
         recursive_html
     ================================================================
     */
@@ -188,7 +211,7 @@ class cfs_loop extends cfs_field
 
         // Dynamically build the $values array
         $parent_tag = empty( $parent_tag ) ? "[$field_id]" : $parent_tag;
-        eval( "\$values = isset(\$this->values{$parent_tag} ) ? \$this->values{$parent_tag} : false;" );
+        $values = $this->get_values_by_tag( $parent_tag );
 
         // Row options
         $row_display = $this->get_option( $loop_field[ $field_id ], 'row_display', 0 );
@@ -212,13 +235,13 @@ class cfs_loop extends cfs_field
             </div>
             <div class="cfs_loop_body<?php echo $css_class; ?>">
             <?php foreach ( $results as $field ) : ?>
-                <label><?php echo $field->label; ?></label>
+                <label><?php echo esc_html( $field->label ); ?></label>
 
                 <?php if ( ! empty( $field->notes ) ) : ?>
-                <p class="notes"><?php echo $field->notes; ?></p>
+                <p class="notes"><?php echo esc_html( $field->notes ); ?></p>
                 <?php endif; ?>
 
-                <div class="field field-<?php echo $field->name; ?> cfs_<?php echo $field->type; ?>">
+                <div class="field field-<?php echo esc_attr( $field->name ); ?> cfs_<?php echo esc_attr( $field->type ); ?>">
                 <?php if ( 'loop' == $field->type ) : ?>
                     <?php $this->recursive_html( $group_id, $field->id, "{$parent_tag}[$i][$field->id]", $i ); ?>
                 <?php else : ?>
@@ -248,7 +271,7 @@ class cfs_loop extends cfs_field
         <?php endforeach; endif; ?>
 
         <div class="table_footer">
-            <input type="button" class="button-primary cfs_add_field" value="<?php echo esc_attr( $button_label ); ?>" data-loop-tag="<?php echo $parent_tag; ?>" data-rows="<?php echo ( $row_offset + 1 ); ?>" />
+            <input type="button" class="button-primary cfs_add_field" value="<?php echo esc_attr( $button_label ); ?>" data-loop-tag="<?php echo esc_attr( $parent_tag ); ?>" data-rows="<?php echo ( $row_offset + 1 ); ?>" />
         </div>
     <?php
     }
